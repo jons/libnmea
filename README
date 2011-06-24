@@ -1,0 +1,59 @@
+libnmea
+nmea 0183 stream tools
+jon@wroth.org
+
+
+FOR MAINTAINERS
+
+  run ./bootstrap.sh after checking out the project.
+
+  or, bootstrap it yourself.
+
+
+IMPLEMENTATION
+
+  you can use this library to manage NMEA streams from a device, however you
+  happen to get them. use nmea_concat to add any new input to the buffer
+  manager, partial or not. then use nmea_scan and nmea_parse to trigger your
+  event, foo, on the presence of a message boundary.
+
+  here's an example of an event driver that never terminates.
+
+  {
+    nmeamsg_t  msg;         /* libnmea message context */
+    nmeabuf_t  nbuf;        /* libnmea read buffer state */
+    char       src[SRCSZ];  /* source stream buffer */
+    char     rxbuf[BUFSZ];  /* read/recv chunk */
+    size_t   rxlen;
+    char     evbuf[MSGSZ];  /* complete message "$...*xx\r\n" */
+    size_t   evlen;
+
+    nmea_ctor(&nbuf, src, SRCSZ);
+
+    for (;;)
+      if (poll(fd, ...))
+        if (rxlen = read(fd, rxbuf, BUFSZ))
+          if (nmea_concat(&nbuf, rxbuf, (size_t)rxlen))
+            while (nmea_scan(&nbuf, &msg))
+            {
+              evlen = nmea_parse(evbuf, MSGSZ, &msg);
+              foo(txbuf, txlen);
+            }
+  }
+
+  the buffer sizes will vary depending on the device you're dealing with and
+  your intentions for it, but, MSGSZ should always be at least as big as the
+  longest possible sentence used to communicate with the device.
+
+  SRCSZ should be big enough to hold several messages if they cannot be serviced
+  rapidly enough.
+
+  depending on whether you are performing a blocking read/recv or not, BUFSZ
+  should be tuned somewhere near the size of the most common messages, or the
+  average of all possible message sizes, or some such heuristic.
+
+  one way to tune it in realtime would be to measure the number of read/recv
+  calls, R, and foo() events raised, E, over some period of time. if the real
+  value E/R approaches one, then BUFSZ is doing fine. as it heads towards
+  zero, however, it takes too many read() calls to raise one foo(), which we
+  can assume means that BUFSZ is too small.

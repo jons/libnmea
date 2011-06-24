@@ -1,0 +1,5 @@
+aclocal.m4
+*.in
+configure
+.bootstrapped
+autom4te.cache
