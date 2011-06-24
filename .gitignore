@@ -1,5 +1,15 @@
 aclocal.m4
 *.in
+config.*
+configure.scan
 configure
 .bootstrapped
 autom4te.cache
+.deps/
+.libs/
+Makefile
+autoscan.log
+libnmea.la
+libnmea.lo
+libtool
+stamp-h1

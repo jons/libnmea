@@ -2,13 +2,13 @@ SUBDIRS = . tests
 
 lib_LTLIBRARIES = libnmea.la
 include_HEADERS = libnmea.h
-libnmea_la_SOURCES = libnmea2.c
+libnmea_la_SOURCES = libnmea.c libnmea.h
 
 ACLOCAL_AMFLAGS=-I m4
 
-AM_CFLAGS = -ansi -pedantic
+AM_CFLAGS = -ansi -pedantic -Wall
 
-libnmea_la_LDFLAGS = -version-info 1:0:0
+libnmea_la_LDFLAGS = -version-info 1:1:0
 
 doc::
 	doxygen Doxyfile

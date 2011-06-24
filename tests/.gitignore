@@ -1,0 +1,7 @@
+.deps
+Makefile
+*.in
+maint
+scanner
+parser
+*.o

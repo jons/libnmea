@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 #include "libnmea.h"
 
 
@@ -186,14 +187,61 @@ int nmea_cksum(const char *nmeasz, long *cksum)
 }
 
 
+void ckstep(int *ret, int *sta, long *calcsum, char *pos)
+{
+  switch(*sta)
+  {
+    case 1:
+      *sta = (*pos == '$') ? 2 : -1;
+      break;
+
+    case 2:
+      if (*pos == '*') *sta = 3;
+      else *calcsum ^= *pos;
+      break;
+
+    case 3:
+    {
+      long checksum = strtol(pos, (char **)NULL, 16);
+      if (0 > checksum)
+      {
+        perror("strtol");
+        return;
+      }
+      *sta = 0;
+      *ret = (*calcsum == checksum) ? 0 : -1;
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+
+static size_t circindex(size_t idx, size_t inc, size_t len)
+{
+  register size_t i=idx+inc;
+  return (i >= len) ? (i % len) : i;
+}
+
+
 /*!
  */
 int nmea_cksum_msg(nmeamsg_t *message, long *cksum)
 {
-  char buf[message->length+1];
-  memset(buf, '\0', sizeof(char) * message->length + 1);
-  nmea_parse(buf, message->length, message);
-  return nmea_cksum(buf, cksum);
+  int ckret = -1;
+  int cksta = 1;
+  long calcsum = 0;
+  size_t i = 0;
+  size_t j = circindex(message->start, 0, message->nmeabuf->alloc);
+  while ((cksta > 0) && (i < message->length))
+  {
+    ckstep(&ckret, &cksta, &calcsum, message->nmeabuf->buffer+j);
+    j = circindex(j, 1, message->nmeabuf->alloc);
+    i++;
+  }
+  if (NULL != cksum) *cksum = calcsum;
+  return ckret;
 }
 
 
