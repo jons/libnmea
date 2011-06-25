@@ -8,7 +8,7 @@ ACLOCAL_AMFLAGS=-I m4
 
 AM_CFLAGS = -ansi -pedantic -Wall
 
-libnmea_la_LDFLAGS = -version-info 1:1:0
+libnmea_la_LDFLAGS = -version-info 2:0:1
 
 doc::
 	doxygen Doxyfile

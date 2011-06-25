@@ -4,4 +4,6 @@ Makefile
 maint
 scanner
 parser
+hex
+cksum
 *.o

@@ -8,7 +8,7 @@ DOXYFILE_ENCODING      = UTF-8
 
 PROJECT_NAME           = "NMEA stream tools"
 
-PROJECT_NUMBER         = 1.1.0
+PROJECT_NUMBER         = 2.0.1
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
 # base path where the generated documentation will be put. 

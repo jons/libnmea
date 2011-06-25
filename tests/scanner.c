@@ -44,6 +44,6 @@ int main()
   if (nmea_scan(&nb, NULL)) return -1;
   if (nmea_scan(&nb, NULL)) return -1;
   if (nmea_scan(&nb, NULL)) return -1;
-  
+
   return 0;
 }

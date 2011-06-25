@@ -38,8 +38,6 @@
 #include "libnmea.h"
 
 
-/*!
- */
 static void nmeabuf_shift(nmeabuf_t *buffer)
 {
   size_t  off;
@@ -53,6 +51,62 @@ static void nmeabuf_shift(nmeabuf_t *buffer)
   buffer->index  -= off;
   buffer->length -= off;
   if (buffer->length) memmove(buffer->buffer, buffer->buffer + off, sizeof(char) * buffer->length);
+}
+
+
+static void ckstep(int *ret, int *sta, long *calcsum, char *pos)
+{
+  switch(*sta)
+  {
+    case 1:
+      *sta = (*pos == '$') ? 2 : -1;
+      break;
+
+    case 2:
+      if (*pos == '*') *sta = 3;
+      else *calcsum ^= *pos;
+      break;
+
+    case 3:
+    {
+      long checksum = strtol(pos, (char **)NULL, 16);
+      if (0 > checksum)
+      {
+        perror("strtol");
+        return;
+      }
+      *sta = 0;
+      *ret = (*calcsum == checksum) ? 0 : -1;
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+
+size_t circindex(size_t idx, size_t inc, size_t len)
+{
+  register size_t i=idx+inc;
+  return (i >= len) ? (i % len) : i;
+}
+
+
+unsigned char dtox(unsigned char c)
+{
+  c &= 0xf;
+  if (c < 10) return c+'0';
+  if (c < 16) return c-10+'A';
+  return '.';
+}
+
+
+unsigned char xtod(unsigned char c)
+{
+  if (!isxdigit(c)) return 0;
+  if (c < 'A') return c-'0';
+  if (c < 'a') return c-'A'+10;
+  return c-'a'+10;
 }
 
 
@@ -187,44 +241,6 @@ int nmea_cksum(const char *nmeasz, long *cksum)
 }
 
 
-void ckstep(int *ret, int *sta, long *calcsum, char *pos)
-{
-  switch(*sta)
-  {
-    case 1:
-      *sta = (*pos == '$') ? 2 : -1;
-      break;
-
-    case 2:
-      if (*pos == '*') *sta = 3;
-      else *calcsum ^= *pos;
-      break;
-
-    case 3:
-    {
-      long checksum = strtol(pos, (char **)NULL, 16);
-      if (0 > checksum)
-      {
-        perror("strtol");
-        return;
-      }
-      *sta = 0;
-      *ret = (*calcsum == checksum) ? 0 : -1;
-      break;
-    }
-    default:
-      break;
-  }
-}
-
-
-static size_t circindex(size_t idx, size_t inc, size_t len)
-{
-  register size_t i=idx+inc;
-  return (i >= len) ? (i % len) : i;
-}
-
-
 /*!
  */
 int nmea_cksum_msg(nmeamsg_t *message, long *cksum)
@@ -242,6 +258,42 @@ int nmea_cksum_msg(nmeamsg_t *message, long *cksum)
   }
   if (NULL != cksum) *cksum = calcsum;
   return ckret;
+}
+
+
+/*!
+ */
+size_t nmea_hexencode(char *wbuf, size_t maxlen, const char *rbuf, size_t rlen)
+{
+  size_t wlen = rlen << 1;
+  char *wp;
+  maxlen &= ~0x1;
+  if (wlen > maxlen) wlen = maxlen;
+  wp = wbuf+wlen-1;
+  rbuf += rlen-1;
+  while (wp > wbuf) /* who will CPSR&#1<<28 with me? not i, said the JGE. */
+  {
+    *wp-- = dtox(*rbuf);
+    *wp-- = dtox(*rbuf-- >> 4);
+  }
+  return wlen;
+}
+
+
+/*!
+ */
+size_t nmea_hexdecode(char *wbuf, size_t maxlen, const char *rbuf, size_t rlen)
+{
+  size_t wlen = rlen >> 1;
+  char *rstp;
+  if (wlen > maxlen) wlen = maxlen;
+  rstp = (char *)rbuf+(wlen<<1);
+  while (rbuf < rstp) /* he did it again! */
+  {
+    *wbuf    = 0xf0 & (xtod(*rbuf++) << 4);
+    *wbuf++ |= 0x0f &  xtod(*rbuf++);
+  }
+  return wlen;
 }
 
 
