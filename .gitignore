@@ -1,5 +1,5 @@
 aclocal.m4
-*.in
+*.h.in
 config.*
 configure.scan
 configure
@@ -8,6 +8,7 @@ autom4te.cache
 .deps/
 .libs/
 Makefile
+Makefile.in
 autoscan.log
 libnmea.la
 libnmea.lo

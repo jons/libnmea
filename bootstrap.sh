@@ -1,9 +1,15 @@
 #!/bin/sh
 #
-if [ -f .bootstrapped ]; then
+set -e
+if [ "$1" == "--force" ]; then
+  rm -f aclocal.m4
+  libtoolize -c -f
+  autoreconf -i -f
+elif [ -f .bootstrapped ]; then
   autoreconf
 else
-  libtoolize
+  libtoolize -c
+  aclocal
   autoreconf -i
-  touch .bootstrapped
 fi
+touch .bootstrapped
