@@ -1,9 +1,12 @@
 #!/bin/sh
 #
-if [ -f .bootstrapped ]; then
+if [ "$1" == "--force" ]; then
+  libtoolize -f
+  autoreconf -i -f
+elif [ -f .bootstrapped ]; then
   autoreconf
 else
   libtoolize
   autoreconf -i
-  touch .bootstrapped
 fi
+touch .bootstrapped
